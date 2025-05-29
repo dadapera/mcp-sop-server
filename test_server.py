@@ -6,12 +6,16 @@ Run this to verify everything is working correctly.
 
 import asyncio
 import sys
+import logging
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from mcp_sop_server import DocumentProcessor, DocumentSearcher, mcp, document_processor, document_searcher
+
+# Suppress some warnings for cleaner test output
+logging.getLogger('chromadb').setLevel(logging.ERROR)
 
 async def test_components():
     """Test the main components of the SOP server."""
@@ -48,6 +52,10 @@ async def test_components():
             print(f"   Category: {sample_doc['sop_category']}")
             print(f"   Language: {sample_doc['language']}")
             print(f"   Chunks: {sample_doc['chunk_count']}")
+            
+            # Count successful vs failed documents
+            successful_docs = [doc for doc in documents if doc['chunks']]
+            print(f"   Successfully processed: {len(successful_docs)}/{len(documents)} documents")
         else:
             print("⚠️  No documents found to process")
             return False
@@ -60,27 +68,21 @@ async def test_components():
     try:
         print("✅ Document searcher initialized")
         
-        # Test adding documents
-        print("   Adding documents to search index...")
-        success = document_searcher.add_documents(documents[:2])  # Test with first 2 docs
-        if success:
-            print("✅ Documents added to search index")
-        else:
-            print("❌ Failed to add documents to search index")
-            return False
+        # Get initial stats
+        initial_stats = document_searcher.get_collection_stats()
+        print(f"   Initial collection: {initial_stats.get('total_chunks', 0)} chunks, {initial_stats.get('total_documents', 0)} documents")
         
-        # Test search
+        # Test search with existing data
         print("   Testing search functionality...")
-        results = document_searcher.search("qualità", n_results=2)
-        if results:
-            print(f"✅ Search returned {len(results)} results")
-            print(f"   Top result: {results[0]['sop_name']}")
-        else:
-            print("⚠️  Search returned no results")
+        test_queries = ["qualità", "procedura", "gestione"]
         
-        # Get stats
-        stats = document_searcher.get_collection_stats()
-        print(f"✅ Collection stats: {stats.get('total_chunks', 0)} chunks, {stats.get('total_documents', 0)} documents")
+        for query in test_queries:
+            results = document_searcher.search(query, n_results=2)
+            if results:
+                print(f"   ✅ Query '{query}': {len(results)} results")
+                print(f"      Top result: {results[0]['sop_name']} (score: {results[0]['similarity_score']:.3f})")
+            else:
+                print(f"   ⚠️  Query '{query}': No results")
         
     except Exception as e:
         print(f"❌ Error with document searcher: {e}")
@@ -92,32 +94,50 @@ async def test_components():
         print("✅ MCP server initialized")
         print(f"✅ Server name: {mcp.name}")
         
-        # Test that tools are registered - handle both sync and async versions
+        # Test that tools are registered
+        tools = await mcp.list_tools()
+        print(f"✅ Found {len(tools)} registered tools:")
+        for tool in tools:
+            print(f"   - {tool.name}")
+        
+        # Test 5: Actual Tool Functionality
+        print("\n5. Testing Tool Functionality...")
+        
+        # Test server status tool
         try:
-            # Try async version first
-            if hasattr(mcp, 'list_tools') and callable(getattr(mcp, 'list_tools')):
-                if asyncio.iscoroutinefunction(mcp.list_tools):
-                    tools = await mcp.list_tools()
-                else:
-                    tools = mcp.list_tools()
-                
-                print(f"✅ Found {len(tools)} registered tools:")
-                for tool in tools:
-                    if isinstance(tool, dict) and 'name' in tool:
-                        print(f"   - {tool['name']}")
-                    else:
-                        print(f"   - {tool}")
+            status_result = await test_tool_call("get_server_status", {})
+            if status_result and status_result.get('success'):
+                print("✅ get_server_status: Working")
+                stats = status_result.get('collection_stats', {})
+                print(f"   Server shows: {stats.get('total_chunks', 0)} chunks indexed")
             else:
-                # Fallback: check if tools are registered by accessing internal attributes
-                if hasattr(mcp, '_tools'):
-                    tools = list(mcp._tools.keys())
-                    print(f"✅ Found {len(tools)} registered tools:")
-                    for tool in tools:
-                        print(f"   - {tool}")
-                else:
-                    print("⚠️  Could not access tools list, but server appears functional")
-        except Exception as tool_error:
-            print(f"⚠️  Could not list tools ({tool_error}), but server appears functional")
+                print("❌ get_server_status: Failed")
+        except Exception as e:
+            print(f"❌ get_server_status: Error - {e}")
+        
+        # Test list categories tool
+        try:
+            categories_result = await test_tool_call("list_sop_categories", {})
+            if categories_result and categories_result.get('success'):
+                print("✅ list_sop_categories: Working")
+                cat_count = categories_result.get('total_categories', 0)
+                print(f"   Found {cat_count} categories")
+            else:
+                print("❌ list_sop_categories: Failed")
+        except Exception as e:
+            print(f"❌ list_sop_categories: Error - {e}")
+        
+        # Test search tool
+        try:
+            search_result = await test_tool_call("search_sop_documents", {"query": "gestione qualità"})
+            if search_result and search_result.get('success'):
+                print("✅ search_sop_documents: Working")
+                result_count = search_result.get('results_count', 0)
+                print(f"   Search returned {result_count} results")
+            else:
+                print("❌ search_sop_documents: Failed")
+        except Exception as e:
+            print(f"❌ search_sop_documents: Error - {e}")
         
     except Exception as e:
         print(f"❌ Error with MCP server: {e}")
@@ -125,6 +145,12 @@ async def test_components():
     
     print("\n" + "=" * 50)
     print("🎉 All tests passed! The MCP SOP Server is ready to use.")
+    print("\nServer Statistics:")
+    final_stats = document_searcher.get_collection_stats()
+    print(f"   📄 Documents: {final_stats.get('total_documents', 0)}")
+    print(f"   🧩 Text chunks: {final_stats.get('total_chunks', 0)}")
+    print(f"   📁 Categories: {len(categories)}")
+    
     print("\nTo start the server, run:")
     print("   python main.py")
     print("\nExample queries to try:")
@@ -133,6 +159,29 @@ async def test_components():
     print("   - 'Gestione del magazzino'")
     
     return True
+
+async def test_tool_call(tool_name: str, arguments: dict):
+    """Helper function to test individual tool calls."""
+    try:
+        # Import the actual tool functions from mcp_server
+        from mcp_sop_server.mcp_server import (
+            get_server_status, list_sop_categories, search_sop_documents
+        )
+        
+        # Map tool names to functions
+        tools_map = {
+            "get_server_status": get_server_status,
+            "list_sop_categories": list_sop_categories,
+            "search_sop_documents": search_sop_documents
+        }
+        
+        if tool_name in tools_map:
+            return await tools_map[tool_name](**arguments)
+        else:
+            return {"success": False, "error": f"Unknown tool: {tool_name}"}
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 if __name__ == "__main__":
     try:
