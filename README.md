@@ -26,21 +26,81 @@ The server uses:
 - 📁 **Category Filtering**: Search within specific SOP categories
 - 🤖 **AI-Ready**: Provides structured responses perfect for LLM consumption
 - ⚡ **Fast Retrieval**: Efficient vector-based search with ChromaDB
+- 🚀 **Lazy Initialization**: Server starts quickly, documents are indexed on first request
 
 ## Installation
 
-1. **Install Dependencies**:
+1. **Clone the repository**:
+
+   ```bash
+   git clone https://github.com/dadapera/mcp-sop-server.git
+   cd mcp-sop-server
+   ```
+
+2. **Create and activate virtual environment**:
+
+   ```bash
+   python -m venv venv
+
+   # On Windows
+   venv\Scripts\activate
+
+   # On macOS/Linux
+   source venv/bin/activate
+   ```
+
+3. **Install Dependencies**:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Verify SOP Documents**:
-   Ensure your SOP documents are in the `sop_documents/` directory, organized by category folders.
+4. **Add your SOP documents**:
+   Create a `sop_documents/` directory and organize your SOP files by category folders.
+
+## Configuration
+
+### MCP Client Setup
+
+To use this server with Claude Desktop or other MCP clients, add it to your MCP client configuration:
+
+**For Claude Desktop** (`mcp-client-config.json`):
+
+```json
+{
+  "mcpServers": {
+    "sop-server": {
+      "command": "/path/to/your/venv/Scripts/python.exe",
+      "args": ["/path/to/your/mcp-sop-server/main.py"],
+      "cwd": "/path/to/your/mcp-sop-server"
+    }
+  }
+}
+```
+
+> **Note**: Make sure to use the full path to your virtual environment's Python executable and adjust paths according to your system.
+
+### Directory Structure
+
+The server expects SOP documents to be organized as follows:
+
+```
+sop_documents/
+├── SOP01 Quality System Documentation Management/
+│   ├── document1.pdf
+│   └── document2.docx
+├── SOP02 HR management/
+│   └── hr_procedures.pdf
+├── SOP03 Design/
+│   └── design_process.docx
+└── ...
+```
 
 ## Usage
 
 ### Starting the Server
+
+The server is typically started automatically by your MCP client (like Claude Desktop). If running manually:
 
 ```bash
 python main.py
@@ -48,11 +108,11 @@ python main.py
 
 The server will:
 
-1. Scan all SOP documents in the `sop_documents/` directory
-2. Process and extract text from PDF and DOCX files
-3. Generate embeddings using the multilingual model
-4. Store everything in ChromaDB for fast retrieval
-5. Start the MCP server on stdio transport
+1. Start quickly and wait for connections
+2. On first tool call: scan all SOP documents in the `sop_documents/` directory
+3. Process and extract text from PDF and DOCX files
+4. Generate embeddings using the multilingual model
+5. Store everything in ChromaDB for fast retrieval
 
 ### Available Tools
 
@@ -116,27 +176,11 @@ Refresh the document database (use when SOPs are updated).
 
 Get current server status and statistics.
 
-## Document Structure
-
-The server expects SOP documents to be organized as follows:
-
-```
-sop_documents/
-├── SOP01 Quality System Documentation Management/
-│   ├── document1.pdf
-│   └── document2.docx
-├── SOP02 HR management/
-│   └── hr_procedures.pdf
-├── SOP03 Design/
-│   └── design_process.docx
-└── ...
-```
-
-## Configuration
+## Technical Configuration
 
 ### Embedding Model
 
-The server uses `paraphrase-multilingual-MiniLM-L12-v2` by default for Italian language support. You can change this in `document_searcher.py`:
+The server uses `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` by default for Italian language support. You can change this in `src/mcp_sop_server/document_searcher.py`:
 
 ```python
 model_name = "sentence-transformers/your-preferred-model"
@@ -144,7 +188,7 @@ model_name = "sentence-transformers/your-preferred-model"
 
 ### Chunk Size
 
-Text chunking can be adjusted in `document_processor.py`:
+Text chunking can be adjusted in `src/mcp_sop_server/document_processor.py`:
 
 ```python
 def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200):
@@ -152,11 +196,7 @@ def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200):
 
 ### Database Location
 
-ChromaDB storage location can be configured in `document_searcher.py`:
-
-```python
-db_path = "your_custom_chroma_db_path"
-```
+ChromaDB storage location is automatically set to `chroma_db/` in the project root.
 
 ## Example Queries
 
@@ -183,17 +223,37 @@ Here are some example queries you can use:
 1. **No documents found**: Ensure SOP documents are in the correct directory structure
 2. **Embedding model download**: First run may take time to download the multilingual model
 3. **Memory usage**: Large document collections may require more RAM for embedding generation
+4. **Path issues**: Make sure to use absolute paths in your MCP client configuration
 
 ### Logs
 
-The server provides detailed logging. Check the console output for:
+The server provides detailed logging with emojis for better readability:
 
-- Document processing status
-- Embedding generation progress
-- Search query results
-- Error messages
+- 🚀 Server startup and initialization
+- 📄 Document processing status
+- 📊 Processing statistics
+- ✅ Success messages
+- ❌ Error messages
+
+Check the console output or your MCP client logs for detailed information.
 
 ## Development
+
+### Project Structure
+
+```
+mcp-sop-server/
+├── src/mcp_sop_server/          # Main package
+│   ├── __init__.py              # Package initialization
+│   ├── mcp_server.py            # FastMCP server and tools
+│   ├── document_processor.py    # Document text extraction
+│   └── document_searcher.py     # Vector search with ChromaDB
+├── main.py                      # Entry point
+├── requirements.txt             # Dependencies
+├── test_server.py              # Server testing
+├── mcp-client-config.json      # Example client configuration
+└── README.md                   # This file
+```
 
 ### Adding New Document Types
 
@@ -211,7 +271,7 @@ Modify the `DocumentSearcher` class to implement custom search algorithms or fil
 
 ### Additional Tools
 
-Add new MCP tools by extending the `_register_tools()` method in `SOPServer`.
+Add new MCP tools by defining them with the `@mcp.tool()` decorator in `mcp_server.py`.
 
 ## License
 
@@ -219,4 +279,4 @@ This project is intended for internal company use for accessing SOP documentatio
 
 ## Support
 
-For issues or questions about the SOP MCP server, please contact your IT department or the development team.
+For issues or questions about the SOP MCP server, please contact your IT department or create an issue on the GitHub repository.
