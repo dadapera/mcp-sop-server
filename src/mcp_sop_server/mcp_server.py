@@ -234,6 +234,8 @@ async def refresh_sop_database() -> Dict[str, Any]:
     """
     Refresh the SOP document database by reprocessing all documents.
     Use this when SOP documents have been updated or added.
+    WARNING: This operation is computationally expensive and time-consuming.
+    Only use this tool in exceptional cases when the SOP database needs to be updated.
     
     Returns:
         Dictionary containing the refresh operation status
