@@ -33,7 +33,7 @@ class DocumentSearcher:
         )
         
         # Load multilingual sentence transformer for Italian support
-        self.logger.info(f"Loading embedding model: {model_name}")
+        self.logger.info(f"🤖 Loading embedding model: {model_name}")
         self.embedding_model = SentenceTransformer(model_name)
         
         # Get or create collection
@@ -49,7 +49,7 @@ class DocumentSearcher:
                 name=self.collection_name,
                 metadata={"description": "SOP documents collection with Italian language support"}
             )
-            self.logger.info(f"Created new collection: {self.collection_name}")
+            self.logger.info(f"📚 Created new collection: {self.collection_name}")
         
         return collection
     

@@ -139,7 +139,7 @@ class DocumentProcessor:
         # Recursively find all supported documents
         for file_path in self.sop_directory.rglob("*"):
             if file_path.is_file() and file_path.suffix.lower() in self.supported_extensions:
-                self.logger.info(f"Processing: {file_path}")
+                self.logger.info(f"📄 Processing: {file_path}")
                 doc_data = self.process_document(file_path)
                 if doc_data:
                     documents.append(doc_data)

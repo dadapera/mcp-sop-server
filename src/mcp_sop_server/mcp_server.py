@@ -37,7 +37,7 @@ async def initialize_server():
     if is_initialized:
         return
         
-    logger.info("🚀 Initializing SOP server...")
+    logger.info("🔄 Initializing SOP server...")
     
     try:
         # Check if collection already has documents
@@ -45,7 +45,7 @@ async def initialize_server():
         
         if stats.get('total_chunks', 0) == 0:
             # Process and add documents
-            logger.info("📄 No existing documents found, processing SOP documents...")
+            logger.info("⚠️  No existing documents found, processing SOP documents...")
             documents = document_processor.scan_sop_documents()
             if documents:
                 logger.info(f"📊 Found {len(documents)} SOP documents to process...")
@@ -95,6 +95,8 @@ async def search_sop_documents(
     Returns:
         Dictionary containing search results with relevant SOP content and metadata
     """
+    logger.info(f"🔧 Called tool: search_sop_documents - query: '{query}', max_results: {max_results}, category: {category}")
+    
     try:
         # Initialize on first call if not already done
         await ensure_initialized()
@@ -128,6 +130,8 @@ async def list_sop_categories() -> Dict[str, Any]:
     Returns:
         Dictionary containing all SOP categories available in the system
     """
+    logger.info("🔧 Called tool: list_sop_categories")
+    
     try:
         categories = document_processor.get_sop_categories()
         stats = document_searcher.get_collection_stats()
@@ -157,6 +161,8 @@ async def get_sop_by_category(category: str) -> Dict[str, Any]:
     Returns:
         Dictionary containing all SOPs in the specified category
     """
+    logger.info(f"🔧 Called tool: get_sop_by_category - category: '{category}'")
+    
     try:
         await ensure_initialized()
         
@@ -192,6 +198,8 @@ async def get_sop_guidance(
     Returns:
         Dictionary containing relevant SOP guidance and procedures
     """
+    logger.info(f"🔧 Called tool: get_sop_guidance - situation: '{situation}', category: {category}")
+    
     try:
         await ensure_initialized()
         
@@ -240,6 +248,8 @@ async def refresh_sop_database() -> Dict[str, Any]:
     Returns:
         Dictionary containing the refresh operation status
     """
+    logger.info("🔧 Called tool: refresh_sop_database")
+    
     global is_initialized
     
     try:
@@ -291,6 +301,8 @@ async def get_server_status() -> Dict[str, Any]:
     Returns:
         Dictionary containing server status and statistics
     """
+    logger.info("🔧 Called tool: get_server_status")
+    
     try:
         stats = document_searcher.get_collection_stats()
         categories = document_processor.get_sop_categories()
