@@ -198,7 +198,7 @@ async def get_sop_guidance(
         # Search for relevant SOPs
         search_results = document_searcher.search(
             query=situation,
-            n_results=3,
+            n_results=5,
             sop_category=category
         )
         
