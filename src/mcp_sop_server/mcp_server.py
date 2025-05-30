@@ -1,4 +1,5 @@
 import logging
+import sys
 from typing import Dict, Any, Optional
 from pathlib import Path
 
@@ -14,7 +15,7 @@ logging.basicConfig(
 )
 
 # Initialize FastMCP server
-mcp = FastMCP("SOP Document Server")
+mcp = FastMCP("SOP Document Server", port=8001)
 
 # Get the project root directory (where main.py is located)
 # Go up from src/mcp_sop_server/ to the project root
@@ -67,7 +68,6 @@ async def initialize_server():
     except Exception as e:
         logger.error(f"❌ Error during server initialization: {e}")
         # Print to stderr so MCP client can see the error
-        import sys
         print(f"SOP Server initialization error: {e}", file=sys.stderr)
         raise
 
@@ -308,9 +308,3 @@ async def get_server_status() -> Dict[str, Any]:
             "success": False,
             "error": str(e)
         }
-
-# Main entry point following official pattern
-if __name__ == "__main__":
-    logger.info("🚀 Starting SOP MCP Server...")
-    logger.info("📚 Server will initialize SOP documents on first request")
-    mcp.run(transport='stdio') 
