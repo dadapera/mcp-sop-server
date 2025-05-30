@@ -1,5 +1,5 @@
 # SOP Documents and Database
-sop_documents/
+sop_documents/*
 chroma_db/
 
 # Virtual Environment
