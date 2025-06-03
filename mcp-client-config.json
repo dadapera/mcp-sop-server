@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "sop-server": {
-      "command": "C:/Users/davide.perozzi/Desktop/repos/mcp-sop/venv/Scripts/python.exe",
-      "args": ["C:/Users/davide.perozzi/Desktop/repos/mcp-sop/main.py"],
-      "cwd": "C:/Users/davide.perozzi/Desktop/repos/mcp-sop"
+      "command": "python",
+      "args": ["main.py"],
+      "cwd": "/path/to/sop/server"
     }
   }
 }
