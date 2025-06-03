@@ -106,12 +106,6 @@ The server is typically started automatically by your MCP client (like Claude De
 python main.py
 ```
 
-**Note on entry points:**
-
-This project provides two main Python scripts for running the server:
-- `main.py`: This is the standard entry point, intended for use when the server is run in a remote/production environment.
-- `main_local.py`: This script is configured for local development and local MCP clients.
-
 The server will:
 
 1. Start quickly and wait for connections
