@@ -279,4 +279,4 @@ This project is intended for internal company use for accessing SOP documentatio
 
 ## Support
 
-For issues or questions about the SOP MCP server, please contact your IT department or create an issue on the GitHub repository.
+For issues or questions about the SOP MCP server, create an issue on the GitHub repository.
