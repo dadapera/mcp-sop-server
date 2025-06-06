@@ -1,0 +1,20 @@
+[project]
+name = "mcp-sop-server"
+version = "0.1.0"
+description = "Model Context Protocol (MCP) server for accessing and searching SOPs documents"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp",
+    "chromadb==0.4.22",
+    "sentence-transformers==2.2.2",
+    "huggingface_hub==0.16.4",
+    "transformers==4.30.0",
+    "torch>=1.11.0",
+    "PyPDF2==3.0.1",
+    "python-docx==1.1.0",
+    "langdetect==1.0.9",
+    "numpy==1.24.3",
+    "pandas==2.0.3",
+    "pycryptodome"
+]
