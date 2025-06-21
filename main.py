@@ -20,12 +20,6 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     logger.info("🚀 Starting SOP MCP Server...")
     
-    # Initialize the server before starting
-    try:
-        asyncio.run(initialize_server())
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize server: {e}")
-        sys.exit(1)
-    
+
     logger.info("📚 SOP Server ready to accept requests")
-    mcp.run(transport='sse') 
+    mcp.run(transport='stdio') 

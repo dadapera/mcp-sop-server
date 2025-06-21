@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 # Initialize FastMCP server
-mcp = FastMCP("SOP Document Server", port=8001)
+mcp = FastMCP("SOP Document Server")
 
 # Get the project root directory (where main.py is located)
 # Go up from src/mcp_sop_server/ to the project root
